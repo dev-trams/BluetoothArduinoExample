@@ -61,6 +61,16 @@ public class ConnectedThread extends Thread{
         }
     }
 
+    public String read() {
+        int output = 0;
+//        byte[] bytes = output.getBytes();
+        try {
+           output = mmInStream.read();
+        }catch (IOException e) {
+        }
+        return String.valueOf(output);
+    }
+
     /* Call this from the main activity to shutdown the connection */
     public void cancel() {
         try {

@@ -1,6 +1,7 @@
 package com.example.bluetootharduinoexample;
 
 import androidx.activity.result.ActivityResultCaller;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -106,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
             btAdapter.cancelDiscovery();
         } else {
             if (btAdapter.isEnabled()) {
+                checkBTPermissions();
                 btAdapter.startDiscovery();
                 btArrayAdapter.clear();
                 if (deviceAddressArray != null && !deviceAddressArray.isEmpty()) {
@@ -146,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public class myOnItemClickListener implements AdapterView.OnItemClickListener {
-
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             Toast.makeText(getApplicationContext(), btArrayAdapter.getItem(position), Toast.LENGTH_SHORT).show();
@@ -183,9 +184,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickButtonSend(View view) {
-        if (connectedThread != null) {Log.v("TAG","arduino::write::a");
-              connectedThread.write("a");}
-        else {Log.e("TAG", "arduino::write::fill");}
+        if (connectedThread != null) {
+            Log.v("TAG", "arduino::write::a");
+            connectedThread.write("a");
+            textStatus.append(connectedThread.read());
+            final int scrollAmount = textStatus.getLayout().getLineTop(textStatus.getLineCount()) - textStatus.getHeight();
+            if (scrollAmount > 0) {
+                textStatus.scrollTo(0, scrollAmount);
+            } else {
+                textStatus.scrollTo(0, 0);
+            }
+        } else {
+            Log.e("TAG", "arduino::write::fill");
+        }
+
     }
 
     private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
@@ -196,28 +208,44 @@ public class MainActivity extends AppCompatActivity {
             Log.e("TAG", "Could not create Insecure RFComm Connection", e);
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-                != PackageManager.PERMISSION_GRANTED) {return null;}
+                != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
         return device.createRfcommSocketToServiceRecord(BT_MODULE_UUID);
     }
 
     //권한 부여
     private void checkedPermission() {
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-              requestPermissions(
-                      new String[]{
-                              Manifest.permission.BLUETOOTH,
-                              Manifest.permission.BLUETOOTH_SCAN,
-                              Manifest.permission.BLUETOOTH_ADVERTISE,
-                              Manifest.permission.BLUETOOTH_CONNECT
-                      },
-                      1);
-          } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-              requestPermissions(
-                      new String[]{
-                              Manifest.permission.BLUETOOTH
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestPermissions(
+                    new String[]{
+                            Manifest.permission.BLUETOOTH,
+                            Manifest.permission.BLUETOOTH_SCAN,
+                            Manifest.permission.BLUETOOTH_ADVERTISE,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                    },
+                    1);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(
+                    new String[]{
+                            Manifest.permission.BLUETOOTH
 
-                      },
-                      1);
-          }
-      }
+                    },
+                    1);
+        }
+    }
+
+    //검색 실패시 사용 (startDiscovery()다음에 사용)
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void checkBTPermissions() {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            int permissionCheck = this.checkSelfPermission("Manifest.permission.ACCESS_FINE_LOCATION");
+            permissionCheck += this.checkSelfPermission("Manifest.permission.ACCESS_FINE_LOCATION");
+            if (permissionCheck != 0) {
+                this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1001);
+            } else {
+                Log.d("checkPermission", "No need to check permissions. SDK version < LoLLIPOP");
+            }
+        }
+    }
 }
