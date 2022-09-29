@@ -60,18 +60,17 @@ public class MainActivity extends AppCompatActivity {
         btnSend = (Button) findViewById(R.id.btn_send);
         listView = (ListView) findViewById(R.id.listview);
 
-        btArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
-        deviceAddressArray = new ArrayList<>();
-        listView.setAdapter(btArrayAdapter);
-
         //bluetooth Enable
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!btAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+        btArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        deviceAddressArray = new ArrayList<>();
+        listView.setAdapter(btArrayAdapter);
 
-        listView.setOnClickListener(new myOnItemClickListener());
+        listView.setOnItemClickListener(new myOnItemClickListener());
     }
 
     // 현재 리스트 출력
@@ -181,6 +180,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+    }
+
+    public void onClickButtonSend(View view) {
+        if (connectedThread != null) {Log.v("TAG","arduino::write::a");
+              connectedThread.write("a");}
+        else {Log.e("TAG", "arduino::write::fill");}
     }
 
     private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
